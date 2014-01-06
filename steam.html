@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="apiExplorer">
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>API Explorer</title>
+
+	<!-- Bootstrap CSS -->
+	<link href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" id="theme-css" rel="stylesheet" media="screen" />
+	<!-- Font Awesome CSS -->
+	<link href="//netdna.bootstrapcdn.com/font-awesome/4.0.1/css/font-awesome.min.css" rel="stylesheet" media="screen" />
+	<!-- Ng-table CSS -->
+	<link href="css/libraries/ng-table/ng-table.css" rel="stylesheet" />
+	<!-- Custom CSS -->
+	<link href="css/style.css" rel="stylesheet" />
+
+	<!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+	<!--[if lt IE 9]>
+		<script src="js/libraries/html5shim/html5shiv.js"></script>
+		<script src="js/libraries/html5shim/html5-3.6-respond-1.1.0.min.js"></script>
+	<![endif]-->
+</head>
+
+<body ng-controller="NavController">
+
+	<!--[if lt IE 7]>
+		<p class="chromeframe">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">activate Google Chrome Frame</a> to improve your experience.</p>
+	<![endif]-->
+
+	<!-- Header -->
+	<div class="navbar navbar-default navbar-static-top">
+		<div class="container">
+			<div class="navbar-header">
+				<!-- Collapsed button for mobile view -->
+				<button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+				</button>
+
+				<!-- Title -->
+				<a class="navbar-brand" href="#">API Explorer</a>
+			</div>
+
+			<!-- Main nav -->
+			<nav class="navbar-collapse collapse">
+				<ul class="nav navbar-nav navbar-left">
+					<li class="dropdown">
+						<a data-toggle="dropdown" href="#api"><strong>Steam</strong> <span class="caret"></span></a>
+						<ul class="dropdown-menu">
+							<li>
+								<a tabindex="-1" href="index.html">Social</a>
+							</li>
+							<li>
+								<a tabindex="-1" href="steam.html">Steam</a>
+							</li>
+						</ul>
+					</li>
+				</ul>
+
+				<ul class="nav navbar-nav navbar-right">
+					<li ng-class="pageConnect_steam">
+						<a href="#pageConnect_steam" data-toggle="tab" ng-click="saveCurrentPage('pageConnect_steam', 'steam')">Connect</a>
+					</li>
+					<li ng-class="pageGames">
+						<a href="#pageGames" data-toggle="tab" ng-click="saveCurrentPage('pageGames', 'steam')">Games</a>
+					</li>
+					<li ng-class="pageUsers">
+						<a href="#pageUsers" data-toggle="tab" ng-click="saveCurrentPage('pageUsers', 'steam')">Users</a>
+					</li>
+					<li class="dropdown">
+						<a data-toggle="dropdown" href="#theme">Theme <span class="caret"></span></a>
+						<ul class="dropdown-menu">
+							<li class="theme capitalise" ng-repeat="(theme, url) in themes">
+								<a tabindex="-1" href="#" ng-click="switchTheme(theme)">
+									{{theme}}
+									<i class="fa fa-check pull-right" ng-show="theme == getCurrentTheme()"></i>
+								</a>
+							</li>
+						</ul>
+					</li>
+				</ul>
+			</nav><!--/.nav-collapse -->
+		</div>
+	</div>
+
+	<div class="container">
+
+		<!-- App loading indicator (useful if a JS file hasn't loaded) -->
+		<div class="alert alert-warning" ng-hide="hasAppLoaded">
+			<strong>Please wait... <i class="fa fa-spinner fa-spin"></i></strong>
+			<p>The app is still loading. If this message doesn't disappear soon, please <a href=".">refresh</a> this page.</p>
+			<p>If this message reappears, some of the linked scripts may not be loading, or you may have an outdated browser.
+		</div>
+
+		<!-- Pages -->
+		<div class="tab-content">
+
+			<!-- Connect Page -->
+			<div id="pageConnect_steam" class="tab-pane" ng-class="pageConnect_steam" ng-controller="ConnectController">
+
+				<div class="row">
+
+					<!-- Steam Configuration -->
+					<div class="col-lg-6">
+						<form class="form-horizontal" role="form" onsubmit="return false;" ng-submit="save()">
+
+							<h1><img src="img/steam.png" class="logo logo-black" height="44" width="176" /> Steam Web API</h1>
+
+							<!-- Instructions -->
+							<fieldset>
+								<legend>Step 1: <span class="text-muted">Get an API Key</span></legend>
+
+								<ol>
+									<li>Create a Steam user account <a href="https://store.steampowered.com/login" target="new">here <i class="fa fa-external-link"></i></a> if you don't have one.</li>
+									<li>Login to your account.</li>
+									<li>Obtain an API Key <a href="http://steamcommunity.com/dev/apikey" target="new">here <i class="fa fa-external-link"></i></a>.</li>
+									<li>Enter any URL for <b>Domain Name</b> (example <tt>rmit.edu.au</tt>).</li>
+									<li>Submit and note the API Key.</li>
+								</ol>
+							</fieldset>
+
+							<!-- Settings -->
+							<fieldset>
+								<legend>Step 2: <span class="text-muted">Save the API Key</span></legend>
+
+								<div class="form-group">
+									<label class="col-lg-5 control-label" for="steam_apiKey">Steam Web API Key:</label>
+									<div class="col-lg-6">
+										<input type="text" class="form-control" ng-model="steam_apiKey" id="steam_apiKey" />
+									</div>
+								</div>
+								<div class="form-group">
+									<div class="col-lg-offset-5 col-lg-6">
+										<button type="submit" class="stateful btn btn-primary" ng-class="stateTracker.map('bootstrap-button', saveState)" ng-disabled="stateTracker.isInProgress(saveState)">
+											{{stateTracker.map(["Save", "Saving", "Saved"], saveState)}}
+											<i class="fa" ng-class="stateTracker.map('fa', saveState)"></i>
+										</button>
+									</div>
+								</div>
+							</fieldset>
+
+						</form>
+					</div>
+
+					<!-- Cache Configuration -->
+					<div class="col-lg-6">
+						<form class="form-horizontal" role="form" onsubmit="return false;" ng-submit="save()">
+
+							<h1>Cache Settings</h1>
+
+							<!-- Settings -->
+							<fieldset>
+								<div class="form-group">
+									<label class="col-lg-5 control-label" for="cache_expiry">Cache expires in:</label>
+									<div class="col-lg-3">
+										<input type="number" class="form-control" ng-model="cache_expiry" id="cache_expiry"
+											placeholder="24" />
+									</div>
+									<div class="col-lg-3">
+										<select name="cache_expiry_unit" class="form-control" ng-model="cache_expiry_unit">
+											<option value="1">minutes</option>
+											<option value="60">hours</option>
+											<option value="1440">days</option>
+										</select>
+									</div>
+									<div class="col-lg-6 col-lg-offset-5 help-block">Use -1 for no expiry.</div>
+								</div>
+								<div class="form-group">
+									<div class="col-lg-offset-5 col-lg-6">
+										<button type="submit" class="stateful btn btn-primary" ng-class="stateTracker.map('bootstrap-button', saveState)" ng-disabled="stateTracker.isInProgress(saveState)">
+											{{stateTracker.map(["Save", "Saving", "Saved"], saveState)}}
+											<i class="fa" ng-class="stateTracker.map('fa', saveState)"></i>
+										</button>
+									</div>
+								</div>
+							</fieldset>
+
+						</form>
+
+						<!-- Separate control for cache clearing -->
+						<div class="col-lg-9 text-right">
+							<p>A large cache can slow the system down. Clear the cache regularly to improve performance:</p>
+						</div>
+						<div class="col-lg-3">
+							<button type="button" class="stateful btn btn-default" ng-class="stateTracker.map('bootstrap-button', clearState)"
+								ng-disabled="stateTracker.isInProgress(clearState)" ng-click="clearCache()">
+								{{stateTracker.map(["Clear Cache", "Clearing", "Cache Cleared"], clearState)}}
+								<i class="fa" ng-class="stateTracker.map('fa', clearState)"></i>
+							</button>
+						</div>
+
+					</div>
+
+				</div>
+			</div>
+
+			<!-- Games Page -->
+			<div id="pageGames" class="tab-pane" ng-class="pageGames" ng-controller="GamesController">
+
+				<!-- When results are available -->
+				<div class="col-lg-12" ng-show="!stateTracker.isInactive(games.listState)">
+
+					<!-- Controls -->
+					<div class="text-right">
+
+						<!-- Clear filters button -->
+						<button type="button" class="btn btn-link" ng-click="tableParams_games.filter({})" title="Clear all filters">
+							<i class="fa fa-filter"></i> Clear Filters
+						</button>
+
+					</div>
+
+					<!-- When table construction is in progress -->
+					<div class="text-center" ng-show="stateTracker.isInProgress(games.listState)">
+						<i class="fa fa-spinner fa-spin fa-3x"></i>
+					</div>
+				</div>
+
+				<!-- Main table -->
+				<div ng-show="stateTracker.isComplete(games.listState) && stateTracker.isInactive(games.zoomState)">
+
+					<table id="gamesListTable" ng-table="tableParams_games" show-filter="true" export-csv="csv"
+						class="table table-hover table-striped table-bordered">
+						<tr ng-repeat="entry in $data">
+							<td data-title="'ID'" class="text-muted text-right" sortable="id" filter="{id: 'id-text'}">
+								{{entry.id | number:0}}
+							</td>
+							<td data-title="'Name'" sortable="name" filter="{name: 'name-text'}">
+								{{entry.name}}
+							</td>
+							<td data-title="'Type'" sortable="type" filter="{type: 'type-select'}">
+								<span class="label {{entry.type | highlightGameType}}">{{entry.type}}</span>
+								<button type="button" class="btn btn-link pull-right" title="Explore game"
+									ng-click="zoomInto(entry)">
+									<i class="fa fa-search"></i>
+								</button>
+							</td>
+						</tr>
+
+						<!-- Default record for no results from filter -->
+						<tr class="placeholder" ng-show="$data.length <= 0">
+							<td colspan="3" class="warning text-center">
+								<p>
+									No matches found.
+									<button type="button" class="btn btn-link" ng-click="tableParams_games.filter({})" title="Clear all filters">
+										<i class="fa fa-filter"></i> Clear Filters
+									</button>
+								</p>
+							</td>
+						</tr>
+					</table>
+
+					<!-- Pagination added automatically here -->
+				</div>
+
+				<!-- Zoom-in: data available from a selected game in the games list table -->
+				<div ng-hide="stateTracker.isInactive(games.zoomState)">
+
+					<div class="panel panel-default">
+						<div class="panel-heading text-center">
+
+							<!-- Return button -->
+							<button type="button" class="btn btn-link pull-left" title="Back to list"
+								ng-click="stateTracker.invalidate(games.zoomState)">
+								<i class="fa fa-long-arrow-left fa-2x"></i>
+							</button>
+
+							<h4>
+								<span class="label {{games.selectedGame.type | highlightGameType}} pull-right">
+									{{games.selectedGame.type}}
+								</span>
+
+								{{games.selectedGame.name}}
+							</h4>
+						</div>
+					</div>
+
+					<ul class="nav nav-pills">
+						<li ng-class="sectionNews">
+							<a href="#sectionNews" data-toggle="tab" ng-click="saveCurrentSection('sectionNews', 'steam')">News</a>
+						</li>
+						<li ng-class="sectionAchievements">
+							<a href="#sectionAchievements" data-toggle="tab" ng-click="saveCurrentSection('sectionAchievements', 'steam')">Achievements</a>
+						</li>
+						<li ng-class="sectionUserStats">
+							<a href="#sectionUserStats" data-toggle="tab" ng-click="saveCurrentSection('sectionUserStats', 'steam')">User Stats</a>
+						</li>
+					</ul>
+
+					<div class="tab-content">
+
+						<!-- News section -->
+						<div id="sectionNews" class="tab-pane" ng-class="sectionNews">
+
+							<div class="panel panel-default">
+
+								<!-- Options -->
+								<div class="panel-heading">
+									<div class="row">
+										<div class="col-lg-1 col-lg-offset-5 form-control-static">
+											Showing:
+										</div>
+										<div class="col-lg-2">
+											<input type="number" class="form-control" ng-model="games.selectedGame.count" />
+										</div>
+										<div class="col-lg-2 form-control-static">
+											news items.
+										</div>
+										<div class="col-lg-2">
+											<!-- Reload button -->
+											<button class="btn btn-link" ng-click="loadNews()" title="Fetch news again">
+												<i class="fa fa-refresh" ng-class="stateTracker.map('fa-loading', games.zoomState_news)"></i> Reload
+											</button>
+										</div>
+									</div>
+								</div>
+
+								<!-- When retrieval of game info is in progress -->
+								<div class="panel-body text-center" ng-show="stateTracker.isInProgress(games.zoomState_news)">
+									<i class="fa fa-spinner fa-spin fa-3x"></i>
+								</div>
+
+								<!-- News list -->
+								<ul class="list-group" ng-show="!stateTracker.isInProgress(games.zoomState_news)">
+									<li class="list-group-item" ng-repeat="item in games.news">
+										<h3>
+											{{item.title}}
+											<small><a href="{{item.url}}" target="_blank"><i class="fa fa-link"></i></a></small>
+										</h3>
+										<p class="readmore" ng-bind-html="item.contents"></p>
+										<p class="text-muted">
+											Posted by {{item.author}} on {{item.date | prettyTime:'unix'}} in
+											<span class="label label-default">{{item.feedlabel}}</span>
+										</p>
+										<span class="clearfix"></span>
+									</li>
+
+									<!-- When retrieval of game info failed -->
+									<li class="list-group-item" ng-show="stateTracker.isFailed(games.zoomState_news)">
+										<div class="alert alert-warning">
+											<p>No news was found for this game.</p>
+										</div>
+									</li>
+								</ul>
+							</div>
+						</div>
+
+						<!-- Achievements section -->
+						<div id="sectionAchievements" class="tab-pane" ng-class="sectionAchievements">
+
+							<div class="panel panel-default">
+
+								<!-- Options -->
+								<div class="panel-heading">
+									<div class="row">
+										<div class="col-lg-3 col-lg-offset-3 form-control-static">
+											Show achievements for a user:
+										</div>
+										<div class="col-lg-4">
+											<input type="text" class="form-control" ng-model="games.selectedGame.selectedUser" placeholder="Steam username or ID" />
+										</div>
+										<div class="col-lg-2">
+											<button class="btn btn-default" ng-click="getAchievements()" title="Fetch news again">
+												<i class="fa fa-refresh" ng-class="stateTracker.map('fa-loading', games.zoomState_achievements)"></i> Submit
+											</button>
+										</div>
+									</div>
+								</div>
+
+								<!-- When retrieval of game info is in progress -->
+								<div class="panel-body text-center" ng-show="stateTracker.isInProgress(games.zoomState_achievements)">
+									<i class="fa fa-spinner fa-spin fa-3x"></i>
+								</div>
+
+								<!-- Achievement list -->
+								<ul class="list-group" ng-show="!stateTracker.isInProgress(games.zoomState_achievements)">
+									<li class="list-group-item" ng-repeat="achievement in games.achievements">
+										<span class="pull-right" ng-show="achievement.percent">
+											{{achievement.percent | number:2}}%
+										</span>
+										<span class="pull-right" ng-show="achievement.achieved === 1">
+											<i class="fa fa-check"></i>
+											Achieved
+										</span>
+										<span class="capitalise" ng-show="achievement.name">
+											{{prettyAchievement(achievement.name)}}
+										</span>
+										<span class="capitalise" ng-show="achievement.apiname">
+											{{prettyAchievement(achievement.apiname)}}
+										</span>
+										<span class="clearfix"></span>
+									</li>
+
+									<!-- When retrieval of game info failed -->
+									<li class="list-group-item" ng-show="stateTracker.isFailed(games.zoomState_achievements)">
+										<div class="alert alert-warning">
+											<p>No achievements were found for this game.</p>
+										</div>
+									</li>
+								</ul>
+
+							</div>
+						</div>
+
+						<!-- User Stats section -->
+						<div id="sectionUserStats" class="tab-pane" ng-class="sectionUserStats">
+
+							<div class="panel panel-default">
+
+								<!-- Options -->
+								<div class="panel-heading">
+									<div class="row">
+										<div class="col-lg-3 col-lg-offset-3 form-control-static">
+											Show game stats for a user:
+										</div>
+										<div class="col-lg-4">
+											<input type="text" class="form-control" ng-model="games.selectedGame.selectedUser" placeholder="Steam username or ID" />
+										</div>
+										<div class="col-lg-2">
+											<button class="btn btn-default" ng-click="getUserStats()" title="Fetch user stats">
+												<i class="fa fa-refresh" ng-class="stateTracker.map('fa-loading', games.zoomState_userStats)"></i> Submit
+											</button>
+										</div>
+									</div>
+								</div>
+
+								<!-- When retrieval of game info is in progress -->
+								<div class="panel-body text-center" ng-show="stateTracker.isInProgress(games.zoomState_userStats)">
+									<i class="fa fa-spinner fa-spin fa-3x"></i>
+								</div>
+
+								<!-- User's stats -->
+								<table id="userStatsTable" ng-table="tableParams_userStats" show-filter="true" export-csv="csv"
+									class="table table-hover table-striped table-bordered">
+									<tr ng-repeat="entry in $data">
+										<td data-title="'Type'" sortable="type" filter="{type: 'stats-select'}">
+											<span class="label {{entry.type | highlightStatsType}}">{{entry.type}}</span>
+										</td>
+										<td class="capitalise" data-title="'Name'" sortable="name" filter="{name: 'name-text'}">
+											{{prettyAchievement(entry.name)}}
+										</td>
+										<td data-title="'Level'" sortable="level">
+											{{entry.level | number}}
+										</td>
+									</tr>
+
+									<!-- Default record for no results from filter -->
+									<tr class="placeholder" ng-show="$data.length <= 0">
+										<td colspan="3" class="warning text-center">
+											<p>
+												No matches found.
+												<button type="button" class="btn btn-link" ng-click="tableParams_userStats.filter({})" title="Clear all filters">
+													<i class="fa fa-filter"></i> Clear Filters
+												</button>
+											</p>
+										</td>
+									</tr>
+								</table>
+
+								<!-- Pagination added automatically here -->
+							</div>
+						</div>
+
+					</div>
+				</div>
+
+				<!-- Filter input templates -->
+				<script type="text/ng-template" id="ng-table/filters/id-text.html">
+					<input type="text" class="form-control" ng-model="params.filter()[name]" name="filter-id" value="" placeholder="(all)" />
+				</script>
+				<script type="text/ng-template" id="ng-table/filters/name-text.html">
+					<input type="text" class="form-control" ng-model="params.filter()[name]" name="filter-name" value="" placeholder="(no filter)" />
+				</script>
+				<script type="text/ng-template" id="ng-table/filters/type-select.html">
+					<select class="form-control" ng-model="params.filter()[name]" name="filter-type" value=""
+						ng-options="type for type in getTypes()">
+					</select>
+				</script>
+				<script type="text/ng-template" id="ng-table/filters/stats-select.html">
+					<select class="form-control" ng-model="params.filter()[name]" name="filter-type" value="">
+						<option value="Achievement">Achievement</option>
+						<option value="Statistics">Statistics</option>
+					</select>
+				</script>
+
+			</div>
+
+			<!-- Users Page -->
+			<div id="pageUsers" class="tab-pane" ng-class="pageUsers" ng-controller="UsersController">
+
+				<header class="jumbotron">
+					<form class="form-horizontal row" role="form" onsubmit="" ng-submit="performSearch()"
+					 	action="sink.html" target="autocomplete_sink">
+
+						<h2>
+							<!-- Return button -->
+							<div class="col-lg-1">
+								<button type="button" class="btn btn-link" title="Back to previous user"
+									ng-click="goBack()" ng-show="search.history.length">
+									<i class="fa fa-long-arrow-left fa-2x"></i>
+								</button>
+							</div>
+
+							<label class="control-label col-lg-3" for="search_user">
+								Profile a user:
+							</label>
+
+							<!-- Query bar -->
+							<div class="col-lg-5">
+								<input type="text" class="form-control input-lg" ng-model="search.user" id="search_user"
+									name="search_user" placeholder="Steam username or ID" />
+							</div>
+
+							<div class="col-lg-3">
+								<button type="submit" class="stateful btn btn-primary btn-lg" ng-class="stateTracker.map('bootstrap-button', search.state)" ng-disabled="stateTracker.isInProgress(search.state) || !search.user">
+									<i class="fa fa-search"></i>
+									{{stateTracker.map(["Search", "Searching", "Search", "Search"], search.state)}}
+									<i class="fa" ng-class="stateTracker.map('fa', search.state)"></i>
+								</button>
+							</div>
+						</h2>
+
+					</form>
+				</header>
+
+				<!-- When retrieval is in progress -->
+				<div class="row text-center" ng-show="stateTracker.isInProgress(search.state)">
+					<i class="fa fa-spinner fa-spin fa-3x"></i>
+				</div>
+
+				<!-- Search results -->
+				<div ng-show="stateTracker.isComplete(search.state)">
+
+					<!-- Profile -->
+					<div class="row">
+
+						<!-- Avatar -->
+						<div class="col-lg-2 text-center">
+							<a class="thumbnail" href="#" ng-href="{{user.profile.avatarfull}}" target="_blank">
+								<img ng-src="{{user.profile.avatarfull}}" alt="Avatar">
+							</a>
+						</div>
+
+						<!-- Main details -->
+						<div class="col-lg-5">
+
+							<!-- Name -->
+							<h1>
+								<span ng-show="user.profile.realname">
+									{{user.profile.realname}}
+								</span>
+								<span ng-hide="user.profile.realname">
+									{{user.profile.personaname}}
+									<small>(Private Profile)</small>
+								</span>
+								<small><a href="{{user.profile.profileurl}}" target="_blank"><i class="fa fa-link"></i></a></small>
+							</h1>
+
+							<!-- Primary details -->
+							<p>
+								<strong>Location:</strong>
+								<span ng-show="user.profile.loccountrycode">
+									{{user.profile.locstatecode}}, {{user.profile.loccountrycode}} (city ID: {{user.profile.loccityid}})
+								</span>
+								<span ng-hide="user.profile.loccountrycode">
+									(unknown)
+								</span>
+							</p>
+							<p>
+								<strong>Joined:</strong>
+								<span ng-show="user.profile.timecreated">
+									{{user.profile.timecreated | prettyTime:'unix'}}
+								</span>
+								<span ng-hide="user.profile.timecreated">
+									(unknown)
+								</span>
+							</p>
+							<p>
+								<strong>Last online:</strong>
+								<span ng-show="user.profile.lastlogoff">
+									{{user.profile.lastlogoff | prettyTime:'unix'}}
+								</span>
+								<span ng-hide="user.profile.lastlogoff">
+									(unknown)
+								</span>
+							</p>
+							<p>
+								<span class="label label-primary" ng-show="user.profile.personastate">
+									{{user.profile.personastate | playerState}}
+								</span>
+								<span class="label label-primary" ng-hide="user.profile.personastate">
+									Status Unknown
+								</span>
+							</p>
+
+						</div>
+
+						<!-- Other details -->
+						<div class="col-lg-5 user-details">
+							<h4>Other details:</h4>
+							<div class="row">
+								<small class="col-lg-6">
+									<p>
+										<span ng-show="user.profile.personaname">
+											Persona Name: {{user.profile.personaname}}
+										</span>
+										<span ng-hide="user.profile.personaname">
+											(unknown)
+										</span>
+									</p>
+									<p>
+										Steam ID:
+										<span ng-show="user.profile.steamid">
+											{{user.profile.steamid}}
+										</span>
+										<span ng-hide="user.profile.steamid">
+											(unknown)
+										</span>
+									</p>
+									<p>
+										Primary Clan ID:
+										<span ng-show="user.profile.primaryclanid">
+											{{user.profile.primaryclanid}}
+										</span>
+										<span ng-hide="user.profile.primaryclanid">
+											(unknown)
+										</span>
+									</p>
+								</small>
+								<small class="col-lg-6">
+									<p>
+										Community profile available:
+										<i class="fa fa-check" ng-show="user.profile.profilestate == 1">
+										</i>
+										<i class="fa fa-times" ng-show="user.profile.profilestate != 1">
+										</i>
+										<span ng-hide="user.profile.profilestate">
+											(unknown)
+										</span>
+									</p>
+									<p>
+										Comment Permission:
+										<i class="fa fa-check" ng-show="user.profile.commentpermission == 1">
+										</i>
+										<i class="fa fa-times" ng-show="user.profile.commentpermission != 1">
+										</i>
+										<span ng-hide="user.profile.commentpermission">
+											(unknown)
+										</span>
+									</p>
+									<p>
+										Profile Visibility:
+										<span ng-show="user.profile.communityvisibilitystate == 3">
+											<i class="fa fa-check"></i> public
+										</span>
+										<span ng-show="user.profile.communityvisibilitystate != 3">
+											<i class="fa fa-times"></i> not visible to you
+										</span>
+										<span ng-hide="user.profile.communityvisibilitystate">
+											<i class="fa fa-times"></i> not visible to you
+										</span>
+									</p>
+									<p>
+										Persona State Flags:
+										<span ng-show="user.profile.personastateflag">
+											{{user.profile.personastateflags}}
+										</span>
+										<span ng-hide="user.profile.personastateflag">
+											(unknown)
+										</span>
+									</p>
+								</small>
+							</div>
+						</div>
+
+					</div>
+					<!-- end profile -->
+
+					<!-- Other data -->
+					<div class="row">
+
+						<!-- Owned games -->
+						<div class="col-lg-4">
+							<div class="panel panel-default">
+								<div class="panel-heading">
+									<h4>
+										Owned Games
+										<span class="label label-default pull-right" ng-show="user.games_owned.game_count">
+											{{user.games_owned.game_count | number}}
+										</span>
+									</h4>
+								</div>
+								<ul class="list-group" ng-show="user.games_owned">
+									<li class="list-group-item" ng-repeat="game in user.games_owned.games">
+										<div class="media">
+											<img class="media-object pull-left" ng-src="http://media.steampowered.com/steamcommunity/public/images/apps/{{game.appid}}/{{game.img_icon_url}}.jpg" />
+											<div class="media-body">
+												<h5 class="media-heading">{{game.name}}</h5>
+												<p class="text-muted">
+													Total playtime: {{game.playtime_forever | number}} minutes<br/>
+													<span ng-show="game.playtime_2weeks">
+														Last 2 weeks: {{game.playtime_2weeks | number}} minutes
+													</span>
+												</p>
+											</div>
+										</div>
+									</li>
+								</ul>
+								<div class="panel-body alert-warning" ng-hide="user.games_owned && user.games_owned.game_count > 0">
+									No information available.
+								</div>
+							</div>
+						</div>
+
+						<!-- Recently played games -->
+						<div class="col-lg-4">
+							<div class="panel panel-default">
+								<div class="panel-heading">
+									<h4>
+										Recently Played Games
+										<span class="label label-default pull-right" ng-show="user.games_recentlyPlayed.total_count">
+											{{user.games_recentlyPlayed.total_count | number}}
+										</span>
+									</h4>
+								</div>
+								<ul class="list-group" ng-show="user.games_recentlyPlayed">
+									<li class="list-group-item" ng-repeat="game in user.games_recentlyPlayed.games">
+										<div class="media">
+											<img class="media-object pull-left" ng-src="http://media.steampowered.com/steamcommunity/public/images/apps/{{game.appid}}/{{game.img_icon_url}}.jpg" />
+											<div class="media-body">
+												<h5 class="media-heading">{{game.name}}</h5>
+												<p class="text-muted">
+													Total playtime: {{game.playtime_forever | number}} minutes<br/>
+													<span ng-show="game.playtime_2weeks">
+														Last 2 weeks: {{game.playtime_2weeks | number}} minutes
+													</span>
+												</p>
+											</div>
+										</div>
+									</li>
+								</ul>
+								<div class="panel-body alert-warning" ng-hide="user.games_recentlyPlayed && user.games_recentlyPlayed.total_count > 0">
+									No information available.
+								</div>
+							</div>
+						</div>
+
+						<!-- Friends list -->
+						<div class="col-lg-4">
+							<div class="panel panel-default">
+								<div class="panel-heading">
+									<h4>
+										Friends
+										<span class="label label-default pull-right" ng-show="user.friends.total_count">
+											{{user.friends.total_count | number}}
+										</span>
+									</h4>
+								</div>
+								<ul class="list-group" ng-show="user.friends">
+									<li class="list-group-item" ng-repeat="(friendID, friend) in user.friends.friendlist">
+										<div class="media">
+											<img class="media-object pull-left" ng-src="{{friend.avatar}}" />
+											<div class="media-body">
+												<h5 class="media-heading">
+													<button type="button" class="btn btn-link pull-right"
+														ng-click="switchUser(friendID)">
+														<i class="fa fa-search"></i>
+													</button>
+													{{friend.personaname}}
+												</h5>
+												<p class="text-muted">Since: {{friend.friend_since | prettyTime:"unix"}}</p>
+											</div>
+										</div>
+									</li>
+								</ul>
+								<div class="panel-body alert-warning" ng-hide="user.friends && user.friends.total_count > 0">
+									No information available.
+								</div>
+							</div>
+						</div>
+
+					</div>
+
+				</div>
+
+
+			</div>
+
+		</div>
+
+	</div>
+
+	<!-- Facebook API integration artefact -->
+	<div id="fb-root"></div>
+
+	<!-- Sink hole for fooling the browser into believing the search request was a form submit. Helps save the query for autocomplete. -->
+	<iframe id="autocomplete_sink" name="autocomplete_sink" class="hidden" src="javascript:false"></iframe>
+
+	<!-- Angular JS for architecture -->
+	<script src="js/libraries/angular/angular.min.js"></script>
+	<script src="js/libraries/angular/angular-cookies.min.js"></script>
+	<script src="js/libraries/angular/angular-sanitize.min.js"></script>
+	<!-- jQuery for interactivity -->
+	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+	<!-- Bootstrap JS -->
+	<script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
+	<!-- Highcharts for charting -->
+	<script src="js/libraries/highcharts/highcharts.js"></script>
+	<script src="js/libraries/highcharts/highcharts-more.js"></script>
+	<script src="js/libraries/highcharts/exporting.js"></script>
+	<!-- Moment JS for time formatting -->
+	<script src="js/libraries/moment/moment.js"></script>
+	<!-- Ng-table for tabulation -->
+	<script src="js/libraries/ng-table/ng-table.js"></script>
+	<script src="js/libraries/ng-table/ng-table-export.src.js"></script>
+	<!-- Readmore for handling long text -->
+	<script src="js/libraries/readmore/readmore.min.js"></script>
+	<!-- Custom JS -->
+	<script src="js/application.js"></script>
+	<script src="js/controllers_common.js"></script>
+	<script src="js/controllers_steam.js"></script>
+	<script src="js/processing.js"></script>
+	<script src="js/charts.js"></script>
+</body>
+
+</html>

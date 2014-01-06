@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="apiExplorer">
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>API Explorer</title>
+
+	<!-- Bootstrap CSS -->
+	<link href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" id="theme-css" rel="stylesheet" media="screen" />
+	<!-- Font Awesome CSS -->
+	<link href="//netdna.bootstrapcdn.com/font-awesome/4.0.1/css/font-awesome.min.css" rel="stylesheet" media="screen" />
+	<!-- Ng-table CSS -->
+	<link href="css/libraries/ng-table/ng-table.css" rel="stylesheet" />
+	<!-- Custom CSS -->
+	<link href="css/style.css" rel="stylesheet" />
+
+	<!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+	<!--[if lt IE 9]>
+		<script src="js/libraries/html5shim/html5shiv.js"></script>
+		<script src="js/libraries/html5shim/html5-3.6-respond-1.1.0.min.js"></script>
+	<![endif]-->
+</head>
+
+<body ng-controller="NavController">
+
+	<!--[if lt IE 7]>
+		<p class="chromeframe">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">activate Google Chrome Frame</a> to improve your experience.</p>
+	<![endif]-->
+
+	<!-- Header -->
+	<div class="navbar navbar-default navbar-static-top">
+		<div class="container">
+			<div class="navbar-header">
+				<!-- Collapsed button for mobile view -->
+				<button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+				</button>
+
+				<!-- Title -->
+				<a class="navbar-brand" href="#">API Explorer</a>
+			</div>
+
+			<!-- Main nav -->
+			<nav class="navbar-collapse collapse">
+				<ul class="nav navbar-nav navbar-left">
+					<li class="dropdown">
+						<a data-toggle="dropdown" href="#api"><strong>Social</strong> <span class="caret"></span></a>
+						<ul class="dropdown-menu">
+							<li>
+								<a tabindex="-1" href="index.html">Social</a>
+							</li>
+							<li>
+								<a tabindex="-1" href="steam.html">Steam</a>
+							</li>
+						</ul>
+					</li>
+				</ul>
+
+				<ul class="nav navbar-nav navbar-right">
+					<li ng-class="pageConnect">
+						<a href="#pageConnect" data-toggle="tab" ng-click="saveCurrentPage('pageConnect')">Connect</a>
+					</li>
+					<li ng-class="pageSearch">
+						<a href="#pageSearch" data-toggle="tab" ng-click="saveCurrentPage('pageSearch')">Search</a>
+					</li>
+					<li ng-class="pageAnalyse">
+						<a href="#pageAnalyse" data-toggle="tab" ng-click="saveCurrentPage('pageAnalyse')">Analyse</a>
+					</li>
+					<li class="dropdown">
+						<a data-toggle="dropdown" href="#theme">Theme <span class="caret"></span></a>
+						<ul class="dropdown-menu">
+							<li class="theme capitalise" ng-repeat="(theme, url) in themes">
+								<a tabindex="-1" href="#" ng-click="switchTheme(theme)">
+									{{theme}}
+									<i class="fa fa-check pull-right" ng-show="theme == getCurrentTheme()"></i>
+								</a>
+							</li>
+						</ul>
+					</li>
+				</ul>
+			</nav><!--/.nav-collapse -->
+		</div>
+	</div>
+
+	<div class="container">
+
+		<!-- App loading indicator (useful if a JS file hasn't loaded) -->
+		<div class="alert alert-warning" ng-hide="hasAppLoaded">
+			<strong>Please wait... <i class="fa fa-spinner fa-spin"></i></strong>
+			<p>The app is still loading. If this message doesn't disappear soon, please <a href=".">refresh</a> this page.</p>
+			<p>If this message reappears, some of the linked scripts may not be loading, or you may have an outdated browser.
+		</div>
+
+		<!-- Pages -->
+		<div class="tab-content">
+
+			<!-- Connect Page -->
+			<div id="pageConnect" class="tab-pane" ng-class="pageConnect" ng-controller="ConnectController">
+
+				<div class="row">
+
+					<!-- Facebook Configuration -->
+					<div class="col-lg-6">
+						<form class="form-horizontal" role="form" onsubmit="return false;" ng-submit="save()">
+
+							<h1><img src="img/facebook.png" class="logo" height="29" width="29" /> Facebook API</h1>
+
+							<!-- Instructions -->
+							<fieldset>
+								<legend>Step 1: <span class="text-muted">Create a new Facebook app</span></legend>
+
+								<ol>
+									<li>Create a new Facebook app <a href="https://developers.facebook.com/apps" target="new">here <i class="fa fa-external-link"></i></a>.</li>
+									<li>Choose any desired name and namespace for the app.</li>
+									<li>Assign the <b>App Domain</b> to the domain where the search program is hosted (example <tt>localhost</tt>).</li>
+									<li>Set <b>Sandbox Mode</b> to <tt>Disabled</tt>.</li>
+									<li>Select <b>App on Facebook</b> and enter the full URL of the search program where requested (example <tt>http://localhost/apiexplorer</tt>).</li>
+									<li>Save the app and note the App ID.</li>
+								</ol>
+							</fieldset>
+
+							<!-- Settings -->
+							<fieldset>
+								<legend>Step 2: <span class="text-muted">Save the app details</span></legend>
+
+								<div class="form-group">
+									<label class="col-lg-5 control-label" for="facebook_appId">Facebook App ID:</label>
+									<div class="col-lg-6">
+										<input type="text" class="form-control" ng-model="facebook['appId']" id="facebook_appId"
+											placeholder="Facebook App ID" />
+									</div>
+								</div>
+								<div class="form-group">
+									<div class="col-lg-offset-5 col-lg-6">
+										<button type="submit" class="stateful btn btn-primary" ng-class="stateTracker.map('bootstrap-button', saveState)" ng-disabled="stateTracker.isInProgress(saveState)">
+											{{stateTracker.map(["Save", "Saving", "Saved"], saveState)}}
+											<i class="fa" ng-class="stateTracker.map('fa', saveState)"></i>
+										</button>
+									</div>
+								</div>
+							</fieldset>
+
+							<!-- Connect -->
+							<fieldset>
+								<legend>Step 3: <span class="text-muted">Connect to Facebook</span></legend>
+
+								<p>Login and authenticate yourself to Facebook to start using the API. You may need to disable any popup blockers.	</p>
+
+								<div class="form-group">
+									<div class="col-lg-offset-5 col-lg-6">
+										<button type="button" class="stateful btn btn-primary" ng-class="stateTracker.map('bootstrap-button', facebookState)" ng-click="connectFacebook()" ng-disabled="stateTracker.isInProgress(facebookState)">
+											{{stateTracker.map(["Authenticate", "Retrying", "Authenticated"], facebookState)}}
+											<i class="fa" ng-class="stateTracker.map('fa', facebookState)"></i>
+										</button>
+									</div>
+								</div>
+							</fieldset>
+
+						</form>
+					</div>
+
+					<!-- Twitter Configuration -->
+					<div class="col-lg-6">
+						<form class="form-horizontal" role="form" onsubmit="return false;" ng-submit="save()">
+
+							<h1><img src="img/twitter2.png" class="logo" height="50" width="50" /> Twitter API</h1>
+
+							<!-- Instructions -->
+							<fieldset>
+								<legend>Step 1: <span class="text-muted">Create a new Twitter app</span></legend>
+
+								<ol>
+									<li>Create a new Twitter application <a href="https://dev.twitter.com/apps" target="new">here <i class="fa fa-external-link"></i></a>.</li>
+									<li>Choose any desired name and description for the app.</li>
+									<li>Enter any URL for the <b>Website</b> (example <tt>localhost</tt>).</li>
+									<li>Save the app and note the authentican keys/tokens generated for you.</li>
+								</ol>
+							</fieldset>
+
+							<!-- Settings -->
+							<fieldset>
+								<legend>Step 2: <span class="text-muted">Save the authentication details</span></legend>
+
+								<div class="form-group">
+									<label class="col-lg-5 control-label" for="twitter_oauth_access_token">OAuth Access Token:</label>
+									<div class="col-lg-6">
+										<input type="text" class="form-control" ng-model="twitter['oauth_access_token']" id="twitter_oauth_access_token"
+											placeholder="Twitter OAuth Access Token" />
+									</div>
+								</div>
+								<div class="form-group">
+									<label class="col-lg-5 control-label" for="twitter_oauth_access_token_secret">OAuth Access Token Secret:</label>
+									<div class="col-lg-6">
+										<input type="text" class="form-control" ng-model="twitter['oauth_access_token_secret']" id="twitter_oauth_access_token_secret"
+											placeholder="Twitter OAuth Access Token" />
+									</div>
+								</div>
+								<div class="form-group">
+									<label class="col-lg-5 control-label" for="twitter_consumer_key">Consumer Key:</label>
+									<div class="col-lg-6">
+										<input type="text" class="form-control" ng-model="twitter['consumer_key']" id="twitter_consumer_key"
+											placeholder="Twitter Consumer Key" />
+									</div>
+								</div>
+								<div class="form-group">
+									<label class="col-lg-5 control-label" for="twitter_consumer_secret">Consumer Secret:</label>
+									<div class="col-lg-6">
+										<input type="text" class="form-control" ng-model="twitter['consumer_secret']" id="twitter_consumer_secret"
+											placeholder="Twitter Consumer Secret" />
+									</div>
+								</div>
+								<div class="form-group">
+									<div class="col-lg-offset-5 col-lg-6">
+										<button type="submit" class="stateful btn btn-primary" ng-class="stateTracker.map('bootstrap-button', saveState)" ng-disabled="stateTracker.isInProgress(saveState)">
+											{{stateTracker.map(["Save", "Saving", "Saved"], saveState)}}
+											<i class="fa" ng-class="stateTracker.map('fa', saveState)"></i>
+										</button>
+									</div>
+								</div>
+							</fieldset>
+
+							<!-- Test -->
+							<fieldset>
+								<legend>Step 3: <span class="text-muted">Test connection to Twitter</span></legend>
+
+								<p>Validate the configuration by performing a test API call.</p>
+
+								<div class="form-group">
+									<div class="col-lg-offset-5 col-lg-6">
+										<button type="button" class="stateful btn btn-primary" ng-class="stateTracker.map('bootstrap-button', twitterState)" ng-click="testTwitter()" ng-disabled="stateTracker.isInProgress(twitterState)">
+											{{stateTracker.map(["Test", "Testing", "Tested", "Test Failed"], twitterState)}}
+											<i class="fa" ng-class="stateTracker.map('fa', twitterState)"></i>
+										</button>
+									</div>
+								</div>
+							</fieldset>
+
+						</form>
+					</div>
+				</div>
+
+				<div class="row">
+
+					<!-- Cache Configuration -->
+					<div class="col-lg-6">
+						<form class="form-horizontal" role="form" onsubmit="return false;" ng-submit="save()">
+
+							<h1>Cache Settings</h1>
+
+							<!-- Settings -->
+							<fieldset>
+								<div class="form-group">
+									<label class="col-lg-5 control-label" for="cache_expiry">Cache expires in:</label>
+									<div class="col-lg-3">
+										<input type="number" class="form-control" ng-model="cache_expiry" id="cache_expiry"
+											placeholder="24" />
+									</div>
+									<div class="col-lg-3">
+										<select name="cache_expiry_unit" class="form-control" ng-model="cache_expiry_unit">
+											<option value="1">minutes</option>
+											<option value="60">hours</option>
+											<option value="1440">days</option>
+										</select>
+									</div>
+									<div class="col-lg-6 col-lg-offset-5 help-block">Use -1 for no expiry.</div>
+								</div>
+								<div class="form-group">
+									<div class="col-lg-offset-5 col-lg-6">
+										<button type="submit" class="stateful btn btn-primary" ng-class="stateTracker.map('bootstrap-button', saveState)" ng-disabled="stateTracker.isInProgress(saveState)">
+											{{stateTracker.map(["Save", "Saving", "Saved"], saveState)}}
+											<i class="fa" ng-class="stateTracker.map('fa', saveState)"></i>
+										</button>
+									</div>
+								</div>
+							</fieldset>
+
+						</form>
+
+						<!-- Separate control for cache clearing -->
+						<div class="col-lg-9 text-right">
+							<p>A large cache can slow the system down. Clear the cache regularly to improve performance:</p>
+						</div>
+						<div class="col-lg-3">
+							<button type="button" class="stateful btn btn-default" ng-class="stateTracker.map('bootstrap-button', clearState)"
+								ng-disabled="stateTracker.isInProgress(clearState)" ng-click="clearCache()">
+								{{stateTracker.map(["Clear Cache", "Clearing", "Cache Cleared"], clearState)}}
+								<i class="fa" ng-class="stateTracker.map('fa', clearState)"></i>
+							</button>
+						</div>
+
+					</div>
+				</div>
+
+			</div>
+
+			<!-- Search Page -->
+			<div id="pageSearch" class="tab-pane" ng-class="pageSearch" ng-controller="SearchController">
+
+				<div class="row">
+
+					<!-- Search form -->
+					<div class="col-lg-8">
+
+						<!-- Heading -->
+						<header class="jumbotron row">
+							<form class="form-horizontal col-lg-10" role="form" onsubmit="" ng-submit="performSearch()"
+							 	action="sink.html" target="autocomplete_sink">
+
+								<label class="control-label row" for="search_query">
+									<h1>Search: </h1>
+								</label>
+
+								<!-- Query bar -->
+								<div class="form-group row">
+
+									<div class="col-lg-10">
+										<input type="text" class="form-control input-lg capitalise" ng-model="search.query" id="search_query"
+											name="search_query" placeholder="Your query" />
+									</div>
+
+									<div class="col-lg-2">
+										<button type="submit" class="stateful btn btn-primary btn-lg" ng-class="stateTracker.map('bootstrap-button', search.state)" ng-disabled="stateTracker.isInProgress(search.state) || !search.query">
+											<i class="fa fa-search"></i>
+											{{stateTracker.map(["Search", "Searching", "Search"], search.state)}}
+											<i class="fa" ng-class="stateTracker.map('fa', search.state)"></i>
+										</button>
+									</div>
+								</div>
+
+							</form>
+						</header>
+
+						<!-- Search options -->
+						<form class="form-horizontal" role="form" onsubmit="return false;" ng-submit="performSearch()">
+
+							<!-- Options column 1 -->
+							<div class="col-lg-6">
+
+								<!-- Query options -->
+								<fieldset>
+									<legend>Query Options</legend>
+
+									<div class="checkbox">
+										<label>
+											<input type="checkbox" ng-model="search.withVariants" id="search_withVariants" />
+											Include these variants:
+										</label>
+
+										<div id="altQueries" ng-show="search.query">
+											<span class="label label-info capitalise" ng-repeat="altQuery in getAltQueries()" ng-show="altQuery != search.query">
+												{{altQuery}}
+											</span>
+										</div>
+
+										<div ng-hide="search.query">
+											<small class="text-muted">(type a query to see variants)</small>
+										</div>
+									</div>
+
+									<div class="checkbox">
+										<label>
+											<input type="checkbox" ng-model="search.onlyRelevant" id="search_onlyRelevant" />
+											Group retrieved data into meaningful categories
+										</label>
+										<small class="help-block">Example, group all time-related fields into <tt>Time</tt>. Available fields are:
+											<tt ng-repeat="fieldName in getRelevantFieldNames()">
+												{{fieldName}}
+											</tt>
+										</small>
+									</div>
+								</fieldset>
+
+								<!-- Twitter options -->
+								<fieldset>
+									<legend>
+										Twitter Options
+										<div class="onoffswitch pull-right">
+											<input type="checkbox" class="onoffswitch-checkbox" ng-model="sources.twitter.enabled" id="twitter">
+											<label class="onoffswitch-label" for="twitter">
+												<div class="onoffswitch-inner"></div>
+												<div class="onoffswitch-switch"></div>
+											</label>
+										</div>
+									</legend>
+
+									<div class="form-group">
+										<label class="control-label col-lg-6" for="twitter_count">Count of tweets:</label>
+										<div class="col-lg-6">
+											<input type="number" class="form-control" ng-model="sources.twitter.count" id="twitter_count" />
+										</div>
+									</div>
+								</fieldset>
+							</div>
+
+							<!-- Options column 2 -->
+							<div class="col-lg-6">
+
+								<!-- Facebook options -->
+								<fieldset>
+									<legend>
+										Facebook Options
+										<div class="onoffswitch pull-right">
+											<input type="checkbox" class="onoffswitch-checkbox" ng-checked="isFacebookEnabled()" ng-click="toggleAllFacebook()" id="facebook">
+											<label class="onoffswitch-label" for="facebook">
+												<div class="onoffswitch-inner"></div>
+												<div class="onoffswitch-switch"></div>
+											</label>
+										</div>
+									</legend>
+
+									<div class="form-group">
+										<label class="control-label col-lg-6" for="facebook_count">Count of posts:</label>
+										<div class="col-lg-6">
+											<input type="number" class="form-control" ng-model="sources.facebook.count" id="facebook_count" />
+										</div>
+									</div>
+
+									<div class="form-group">
+										<div class="col-lg-10 text-right">
+											<p class="form-control-static">Search for {{sources.facebook.count}} posts each from:</small>
+										</div>
+									</div>
+
+									<div class="form-group">
+										<label class="text-right col-lg-10">Public posts</label>
+										<div class="onoffswitch col-lg-2">
+											<input type="checkbox" class="onoffswitch-checkbox" ng-model="sources.facebook.posts" id="facebook_type_public_posts">
+											<label class="onoffswitch-label" for="facebook_type_public_posts">
+												<div class="onoffswitch-inner"></div>
+												<div class="onoffswitch-switch"></div>
+											</label>
+										</div>
+									</div>
+
+<!--
+									No need for this to be accessible – just for testing/proof-of-concept.
+ 									<div class="form-group">
+										<label class="text-right col-lg-10">Pages &amp; groups</label>
+										<div class="onoffswitch col-lg-2">
+											<input type="checkbox" class="onoffswitch-checkbox" ng-model="sources.facebook.pages" id="facebook_type_pages">
+											<label class="onoffswitch-label" for="facebook_type_pages">
+												<div class="onoffswitch-inner"></div>
+												<div class="onoffswitch-switch"></div>
+											</label>
+										</div>
+									</div>
+-->
+
+									<div class="form-group">
+										<label class="text-right col-lg-10">Posts in pages &amp; groups</label>
+										<div class="onoffswitch col-lg-2">
+											<input type="checkbox" class="onoffswitch-checkbox" ng-model="sources.facebook.postsInPages" id="facebook_type_page_posts">
+											<label class="onoffswitch-label" for="facebook_type_page_posts">
+												<div class="onoffswitch-inner"></div>
+												<div class="onoffswitch-switch"></div>
+											</label>
+										</div>
+									</div>
+
+								</fieldset>
+
+							</div>
+
+						</form>
+
+					</div>
+
+					<!-- Search history -->
+					<div class="col-lg-4" id="searchHistory">
+						<div class="panel panel-default">
+							<div class="panel-heading">
+								<h1 class="panel-title"><i class="fa fa-clock-o text-muted"></i> Search History</h1>
+							</div>
+
+							<!-- Generic intro -->
+							<div class="panel-body">
+								A record of each of your searches will appear here.
+							</div>
+
+							<ul class="list-group">
+
+								<!-- Each record in chronological order -->
+								<li class="list-group-item" ng-repeat="record in history track by $index">
+
+									<!-- In case the record was deleted -->
+									<div ng-hide="record != undefined">
+										<small class="text-muted">(deleted)</small>
+									</div>
+
+									<!-- The search record -->
+									<div ng-show="record != undefined">
+										<button type="button" class="close pull-right" title="Delete from history" ng-click="clearHistory(record)">&times;</button>
+
+										<!-- Query -->
+										<h4 class="list-group-item-heading capitalise">{{record.query}}</h4>
+
+										<!-- Progress for running queries -->
+										<div>
+											<!-- Status -->
+											<small>
+												<span class="text-muted" ng-show="stateTracker.isInProgress(record.state)">Searching...</span>
+												<span class="text-muted" ng-show="stateTracker.isComplete(record.state)">Completed on {{record.time | date:'medium'}}
+												</span>
+												<span class="text-danger" ng-show="stateTracker.isFailed(record.state)">Failed</span>
+											</small>
+
+											<!-- Progress bar -->
+											<div class="progress progress-striped active" ng-show="stateTracker.isInProgress(record.state)">
+												<div class="progress-bar" ng-class="stateTracker.map('bootstrap-progress-bar', record.state)"
+													role="progressbar" aria-valuenow="{{record.state.progress}}"
+													aria-valuemin="0" aria-valuemax="100" style="width: {{record.state.progress}}%">
+													<span class="sr-only">{{record.state.progress}}% complete</span>
+												</div>
+											</div>
+										</div>
+
+										<!-- Search details -->
+										<div class="list-group-item-text">
+
+											<ul>
+												<li ng-show="record.withVariants">Including variations.</li>
+												<li ng-show="record.onlyRelevant">Grouped into relevant categories.</li>
+
+												<!-- Facebook sources and counts -->
+												<li ng-show="record.sources.facebook.enabled">
+													<span class="badge pull-right">{{record.sources.facebook.count}}</span>
+													Searched in Facebook including:
+													<ul class="capitalise">
+														<li ng-show="record.sources.facebook.posts">public posts</li>
+														<li ng-show="record.sources.facebook.pages">pages</li>
+														<li ng-show="record.sources.facebook.postsInPages">posts in pages</li>
+													</ul>
+												</li>
+
+												<!-- Twitter sources and counts -->
+												<li ng-show="record.sources.twitter.enabled">
+													<span class="badge pull-right">{{record.sources.twitter.count}}</span>
+													Searched in Twitter
+												</li>
+											</ul>
+										</div>
+
+									</div>
+								</li>
+							</ul>
+
+							<!-- Clear all history -->
+							<div class="panel-footer text-center" ng-show="history.length">
+								<button type="button" class="btn btn-link" ng-click="clearHistory()">Clear All</button>
+							</div>
+
+						</div>
+					</div>
+
+				</div>
+
+			</div>
+
+			<!-- Analysis Page -->
+			<div id="pageAnalyse" class="tab-pane" ng-class="pageAnalyse">
+
+				<!-- Nav -->
+				<ul class="nav nav-pills">
+					<li ng-class="sectionTable">
+						<a href="#sectionTable" data-toggle="tab" ng-click="saveCurrentSection('sectionTable')">All Results</a>
+					</li>
+					<li ng-class="sectionCharts">
+						<a href="#sectionCharts" data-toggle="tab" ng-click="saveCurrentSection('sectionCharts')">Charts</a>
+					</li>
+					<li ng-class="sectionPerformance">
+						<a href="#sectionPerformance" data-toggle="tab" ng-click="saveCurrentSection('sectionPerformance')">Performance</a>
+					</li>
+				</ul>
+
+				<!-- Analysis sections -->
+				<div class="tab-content row">
+
+					<!-- Table section -->
+					<div id="sectionTable" class="tab-pane" ng-class="sectionTable" ng-controller="TableController">
+
+						<!-- When no results yet -->
+						<div class="col-lg-12" ng-hide="results.length && !stateTracker.isInactive(table.state)">
+							<div class="alert alert-info">Nothing to see! Come back when you've done a search.</div>
+						</div>
+
+						<!-- When results are available -->
+						<div class="col-lg-12" ng-show="results.length && !stateTracker.isInactive(table.state)">
+
+							<!-- Controls -->
+							<div class="text-right">
+
+								<!-- Download CSV buttons -->
+								<div class="dropdown">
+									<button type="button" class="btn btn-link dropdown-toggle" data-toggle="dropdown">
+										<i class="fa fa-download"></i> Download as CSV
+										<span class="caret"></span>
+									</button>
+
+									<ul class="dropdown-menu text-left">
+										<li>
+											<a title="Download current view" tab-index="-1"
+												ng-mousedown="csv.generate()" ng-href="{{csv.link()}}" download="search-results.csv">
+												Download current view
+											</a>
+										</li>
+										<li>
+											<a title="Download all results" tab-index="-1"
+												ng-mousedown="generateCSV()" ng-href="{{fullCSV}}" download="search-results.csv">
+												Download all results
+											</a>
+										</li>
+										<li class="divider"></li>
+										<li class="dropdown-header">Note: texts longer than 10,000 characters will be truncated.</li>
+									</ul>
+								</div>
+
+								<!-- Clear filters button -->
+								<button type="button" class="btn btn-link" ng-click="tableParams.filter({})" title="Clear all filters">
+									<i class="fa fa-filter"></i> Clear Filters
+								</button>
+
+								<!-- Reload button -->
+								<button class="btn btn-link" ng-click="reloadTable()" title="Reload table">
+									<i class="fa fa-refresh" ng-class="stateTracker.map('fa-loading', table.state)"></i> Reload
+								</button>
+							</div>
+
+							<!-- When table construction is in progress -->
+							<div class="text-center" ng-show="stateTracker.isInProgress(table.state)">
+								<i class="fa fa-spinner fa-spin fa-3x"></i>
+							</div>
+
+							<!-- If results have problems -->
+							<div ng-show="!stateTracker.isInactive(table.state) && hasWarnings()">
+								<div class="alert alert-warning" ng-repeat="warning in table.warnings">
+									<p><strong>Warning!</strong></p>
+									<p>{{warning}}</p>
+								</div>
+							</div>
+
+							<!-- Main table -->
+							<div ng-show="stateTracker.isComplete(table.state) && stateTracker.isInactive(table.zoomState)">
+
+								<table id="resultsTable" ng-table="tableParams" show-filter="true" export-csv="csv"
+									class="table table-hover table-striped table-bordered">
+									<tr ng-repeat="entry in $data">
+										<td data-title="'Query'" class="capitalise" sortable="query" filter="{query: 'query-select'}">
+											{{entry.query}}
+										</td>
+										<td data-title="'Field'" sortable="field" filter="{field: 'field-select'}">
+											{{entry.field}}
+										</td>
+										<td data-title="'Entry'" sortable="entry" filter="{entry: 'entry-text'}">
+											<span ng-bind-html="entry.entry | linky:'_blank' | highlightQuery:entry.query" class="readmore"></span>
+										</td>
+										<td data-title="'Count'" sortable="count" filter="{count: 'count-number'}">
+											<span class="label" ng-class="{'label-success': entry.count > 1, 'label-warning': entry.count <= 1}">
+												{{entry.count}}
+											</span>
+											<button type="button" class="btn btn-link pull-right" title="See all messages"
+												ng-click="zoomInto(entry.query, entry.ids)">
+												<i class="fa fa-search"></i>
+											</button>
+										</td>
+									</tr>
+
+									<!-- Default record for no results from filter -->
+									<tr class="placeholder" ng-show="$data.length <= 0">
+										<td colspan="4" class="warning text-center">
+											<p>
+												No matches found.
+												<button type="button" class="btn btn-link" ng-click="tableParams.filter({})" title="Clear all filters">
+													<i class="fa fa-filter"></i> Clear Filters
+												</button>
+											</p>
+										</td>
+									</tr>
+								</table>
+
+								<!-- Pagination added automatically here -->
+							</div>
+
+							<!-- Zoom-in: all messages from a selected record in the results table -->
+							<div class="panel panel-default" ng-hide="stateTracker.isInactive(table.zoomState)">
+								<div class="panel-heading text-center">
+
+									<!-- Return button -->
+									<button type="button" class="btn btn-link pull-left" title="Back to results"
+										ng-click="stateTracker.invalidate(table.zoomState)">
+										<i class="fa fa-long-arrow-left fa-2x"></i>
+									</button>
+
+									<h4>Selected Messages</h4>
+								</div>
+
+								<!-- When extraction of messages is in progress -->
+								<div class="panel-body text-center" ng-show="stateTracker.isInProgress(table.zoomState)">
+									<i class="fa fa-spinner fa-spin fa-3x"></i>
+								</div>
+
+								<!-- List of messages -->
+								<ul id="zoomTable" class="list-group">
+									<li class="list-group-item" ng-repeat="message in selectedMessages">
+										<dl class="dl-horizontal">
+											<span ng-repeat="(field, entry) in message">
+												<dt>{{field}}</dt>
+												<dd>
+													<span ng-bind-html="entry | prettyTime:field | linky:'_blank' | highlightQuery:selectedQuery">
+													</span>
+												</dd>
+											</span>
+										</dl>
+									</li>
+								</ul>
+							</div>
+
+							<!-- Filter input templates -->
+							<script type="text/ng-template" id="ng-table/filters/query-select.html">
+								<select class="form-control capitalise" ng-model="params.filter()[name]" name="filter-query" value=""
+									ng-options="query for query in getQueries()">
+								</select>
+							</script>
+							<script type="text/ng-template" id="ng-table/filters/field-select.html">
+								<select class="form-control" ng-model="params.filter()[name]" name="filter-field" value=""
+									ng-options="field for field in getFields()">
+								</select>
+							</script>
+							<script type="text/ng-template" id="ng-table/filters/entry-text.html">
+								<input type="text" class="form-control" ng-model="params.filter()[name]" name="filter-entry" value="" placeholder="(no filter)" />
+							</script>
+							<script type="text/ng-template" id="ng-table/filters/count-number.html">
+								<input type="number" class="form-control" ng-model="params.filter()[name]" name="filter-count" value="" placeholder="(all)"/>
+							</script>
+
+						</div>
+					</div>
+
+					<!-- Charts section -->
+					<div id="sectionCharts" class="tab-pane" ng-class="sectionCharts" ng-controller="ChartController">
+
+						<!-- When no results yet -->
+						<div class="col-lg-12" ng-hide="areResultsAvailable">
+							<div class="alert alert-info">Nothing to see! Come back when you've done a search.</div>
+						</div>
+
+						<!-- When results are available -->
+						<div class="col-lg-12" ng-show="areResultsAvailable">
+
+							<!-- Chart menu -->
+							<div class="panel panel-default col-lg-12" id="chartOptions">
+								<div class="panel-body">
+
+									<!-- Reload button -->
+									<button class="btn btn-link pull-right" ng-click="reloadCharts()" title="Reload charts">
+										<i class="fa fa-refresh" ng-class="stateTracker.map('fa-loading', charts.state)"></i> Reload
+									</button>
+
+									<div class="col-lg-3">
+										<h4>Options:</h4>
+									</div>
+
+									<div class="col-lg-3">
+										<p>Primary category (x-axis):</p>
+										<p>
+											<select class="form-control" ng-model="xAxisLabel" ng-change="reloadCharts()" ng-show="resultFields"
+												ng-options="field for field in resultFields"></select>
+											<small class="text-muted" ng-hide="resultFields">(No results available)</small>
+										</p>
+									</div>
+
+									<div class="col-lg-3">
+										<p>Secondary category (y-axis):</p>
+										<p>
+											<select class="form-control" ng-model="yAxisLabel" ng-change="reloadCharts()" ng-show="resultFields"
+												ng-options="field for field in resultFields"></select>
+											<small class="text-muted" ng-hide="resultFields">(No results available)</small>
+										</p>
+									</div>
+
+								</div>
+							</div>
+
+							<!-- Draw charts the first time -->
+							<div class="text-center" ng-show="stateTracker.isInactive(charts.state)">
+								<div class="alert alert-success">
+									Search results are available. You can now start drawing the charts now:
+								</div>
+								<!-- Reload button -->
+								<button class="btn btn-success btn-lg" ng-click="reloadCharts()" title="Draw charts">Draw Charts</button>
+							</div>
+
+							<!-- If results have problems -->
+							<div ng-show="!stateTracker.isInactive(charts.state) && hasWarnings()">
+								<div class="alert alert-warning" ng-repeat="warning in charts.warnings">
+									<p><strong>Warning!</strong></p>
+									<p>{{warning}}</p>
+								</div>
+							</div>
+
+							<!-- Charting is in progress -->
+							<div class="text-center" ng-show="stateTracker.isInProgress(charts.state)">
+								<i class="fa fa-spinner fa-spin fa-3x"></i>
+							</div>
+
+							<!-- Charts -->
+							<div class="media" ng-repeat="label in charts.labels" id="{{label}}-container">
+								<div class="media-body">
+									<h2 class="media-heading" ng-show="stateTracker.isComplete(charts.state)">
+										{{charts.names[label]}}
+									</h2>
+									<div id="{{label}}" class="chart-holder"></div>
+								</div>
+							</div>
+						</div>
+
+					</div>
+
+					<!-- Performance section -->
+					<div id="sectionPerformance" class="tab-pane" ng-class="sectionPerformance" ng-controller="PerformanceController">
+
+						<!-- When no results yet -->
+						<div class="col-lg-12" ng-hide="searchHistory">
+							<div class="alert alert-info">Nothing to see! Come back when you've done a search.</div>
+						</div>
+
+						<!-- When results are available -->
+						<div class="col-lg-12" ng-show="searchHistory">
+
+							<!-- Controls -->
+							<div class="text-right" ng-show="!stateTracker.isInactive(performanceState)">
+								<!-- Reload button -->
+								<button class="btn btn-link" ng-click="reloadPerformance()" title="Reload table">
+									<i class="fa fa-refresh" ng-class="stateTracker.map('fa-loading', performanceState)"></i> Reload
+								</button>
+							</div>
+
+							<!-- Charting is in progress -->
+							<div class="text-center" ng-show="stateTracker.isInProgress(performanceState)">
+								<i class="fa fa-spinner fa-spin fa-3x"></i>
+							</div>
+
+							<!-- Performance table -->
+							<table class="table table-striped table-bordered" ng-show="stateTracker.isComplete(performanceState)">
+								<thead>
+									<tr>
+										<th class="text-center">Query</th>
+										<th class="text-center">Sources Covered</th>
+										<th class="text-center">Precision</th>
+										<th class="text-center">Frequency</th>
+									</tr>
+								</thead>
+								<tbody>
+									<tr ng-repeat="record in searchHistory">
+										<td class="col-lg-2 capitalise text-center">
+											<h4>{{record.query}}</h4>
+										</td>
+										<td class="col-lg-3">
+											<ul class="list-unstyled">
+												<!-- Facebook sources and counts -->
+												<li ng-show="record.sources.facebook.enabled && record.sources.facebook.posts">Facebook Public Posts</li>
+												<li ng-show="record.sources.facebook.enabled && record.sources.facebook.pages">Facebook Pages and Groups</li>
+												<li ng-show="record.sources.facebook.enabled && record.sources.facebook.postsInPages">Facebook Posts within Pages and Groups</li>
+
+												<!-- Twitter sources and counts -->
+												<li ng-show="record.sources.twitter.enabled">Twitter</li>
+											</ul>
+										</td>
+										<td class="col-lg-3">
+											<h1 class="text-center" ng-show="record.stats.documentCount > 0">
+												{{(record.stats.documentFrequency * 100 / record.stats.documentCount) | number:0}}%
+											</h1>
+											<h1 class="text-center" ng-hide="record.stats.documentCount > 0">
+												0%
+											</h1>
+											<p class="text-muted">
+												{{record.stats.documentFrequency | number:0}} out of {{record.stats.documentCount | number:0}} posts included the query term (or any variation).
+											</p>
+										</td>
+										<td class="col-lg-4">
+											<dl>
+												<dt>
+													Term Frequency:
+													<h4 class="pull-right">
+														{{record.stats.termFrequency | number:0}}
+													</h4>
+												</dt>
+												<dd class="text-muted">Total occurrences of the term (or any variation) in the results.</dd>
+												<dt>
+													Average Term Frequency:
+													<h4 class="pull-right" ng-show="record.stats.documentCount > 0">
+														{{(record.stats.termFrequency / record.stats.documentCount) | number}}
+													</h4>
+													<h4 class="pull-right" ng-hide="record.stats.documentCount > 0">
+														0
+													</h4>
+												</dt>
+												<dd class="text-muted">Averaged over total number of posts retrieved.</dd>
+												<dt>
+													Normalised Average Term Frequency:
+													<h4 class="pull-right" ng-show="record.stats.documentCount > 0">
+														{{(record.stats.normalisedTermFrequency / record.stats.documentCount) | number}}
+													</h4>
+													<h4 class="pull-right" ng-hide="record.stats.documentCount > 0">
+														0
+													</h4>
+												</dt>
+												<dd class="text-muted">Frequency of terms normalised by post length.</dd>
+											</dl>
+										</td>
+									</tr>
+								</tbody>
+							</table>
+
+							<!-- Tips -->
+							<div class="col-lg-12 alert alert-success" ng-show="searchHistory">
+								<strong>Tips:</strong>
+								<ul>
+									<li>Compare the performance of Facebook and Twitter sources by doing one search on each source for the same query.</li>
+									<li>Compare which games offer better results by querying for each game over the same sources.</li>
+								</ul>
+							</div>
+
+						</div>
+					</div>
+
+				</div>
+
+			</div>
+
+		</div>
+
+	</div>
+
+	<!-- Facebook API integration artefact -->
+	<div id="fb-root"></div>
+
+	<!-- Sink hole for fooling the browser into believing the search request was a form submit. Helps save the query for autocomplete. -->
+	<iframe id="autocomplete_sink" name="autocomplete_sink" class="hidden" src="javascript:false"></iframe>
+
+	<!-- Angular JS for architecture -->
+	<script src="js/libraries/angular/angular.min.js"></script>
+	<script src="js/libraries/angular/angular-cookies.min.js"></script>
+	<script src="js/libraries/angular/angular-sanitize.min.js"></script>
+	<!-- jQuery for interactivity -->
+	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+	<!-- Bootstrap JS -->
+	<script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
+	<!-- Highcharts for charting -->
+	<script src="js/libraries/highcharts/highcharts.js"></script>
+	<script src="js/libraries/highcharts/highcharts-more.js"></script>
+	<script src="js/libraries/highcharts/exporting.js"></script>
+	<!-- Moment JS for time formatting -->
+	<script src="js/libraries/moment/moment.js"></script>
+	<!-- Ng-table for tabulation -->
+	<script src="js/libraries/ng-table/ng-table.js"></script>
+	<script src="js/libraries/ng-table/ng-table-export.src.js"></script>
+	<!-- Readmore for handling long text -->
+	<script src="js/libraries/readmore/readmore.min.js"></script>
+	<!-- Custom JS -->
+	<script src="js/application.js"></script>
+	<script src="js/controllers_common.js"></script>
+	<script src="js/controllers_social.js"></script>
+	<script src="js/processing.js"></script>
+	<script src="js/charts.js"></script>
+</body>
+
+</html>
