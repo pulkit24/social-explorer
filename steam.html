@@ -60,9 +60,6 @@
 				</ul>
 
 				<ul class="nav navbar-nav navbar-right">
-					<li ng-class="pageConnect_steam">
-						<a href="#pageConnect_steam" data-toggle="tab" ng-click="saveCurrentPage('pageConnect_steam', 'steam')">Connect</a>
-					</li>
 					<li ng-class="pageGames">
 						<a href="#pageGames" data-toggle="tab" ng-click="saveCurrentPage('pageGames', 'steam')">Games</a>
 					</li>
@@ -79,6 +76,9 @@
 								</a>
 							</li>
 						</ul>
+					</li>
+					<li ng-class="pageConnect_steam">
+						<a href="#pageConnect_steam" data-toggle="tab" ng-click="saveCurrentPage('pageConnect_steam', 'steam')" title="Connect"><i class="fa fa-cog text-muted"></i></a>
 					</li>
 				</ul>
 			</nav><!--/.nav-collapse -->

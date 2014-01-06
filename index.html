@@ -60,9 +60,6 @@
 				</ul>
 
 				<ul class="nav navbar-nav navbar-right">
-					<li ng-class="pageConnect">
-						<a href="#pageConnect" data-toggle="tab" ng-click="saveCurrentPage('pageConnect')">Connect</a>
-					</li>
 					<li ng-class="pageSearch">
 						<a href="#pageSearch" data-toggle="tab" ng-click="saveCurrentPage('pageSearch')">Search</a>
 					</li>
@@ -79,6 +76,9 @@
 								</a>
 							</li>
 						</ul>
+					</li>
+					<li ng-class="pageConnect">
+						<a href="#pageConnect" data-toggle="tab" ng-click="saveCurrentPage('pageConnect')" title="Connect"><i class="fa fa-cog text-muted"></i></a>
 					</li>
 				</ul>
 			</nav><!--/.nav-collapse -->

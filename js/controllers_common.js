@@ -10,9 +10,11 @@
 ////////////////////////////////////////
 function NavController($scope, $cookies) {
 	// Content pages
-	$scope.pageConnect = $cookies.activePage ? ($cookies.activePage === "pageConnect" ? "active" : "") : "active";
-	$scope.pageSearch = $cookies.activePage === "pageSearch" ? "active" : "";
+	// $scope.pageConnect = $cookies.activePage ? ($cookies.activePage === "pageConnect" ? "active" : "") : "active";
+	$scope.pageSearch = $cookies.activePage ? ($cookies.activePage === "pageSearch" ? "active" : "") : "active";
+	// $scope.pageSearch = $cookies.activePage === "pageSearch" ? "active" : "";
 	$scope.pageAnalyse = $cookies.activePage === "pageAnalyse" ? "active" : "";
+	$scope.pageConnect = $cookies.activePage === "pageConnect" ? "active" : "";
 
 	// Sections in the analysis page
 	$scope.sectionTable = $cookies.activeSection ? ($cookies.activeSection === "sectionTable" ? "active" : "") : "active";
@@ -20,9 +22,11 @@ function NavController($scope, $cookies) {
 	$scope.sectionPerformance = $cookies.activeSection === "sectionPerformance" ? "active" : "";
 
 	// Content pages – Steam Explorer
-	$scope.pageConnect_steam = $cookies.activePage_steam ? ($cookies.activePage_steam === "pageConnect_steam" ? "active" : "") : "active";
-	$scope.pageGames = $cookies.activePage_steam === "pageGames" ? "active" : "";
+	// $scope.pageConnect_steam = $cookies.activePage_steam ? ($cookies.activePage_steam === "pageConnect_steam" ? "active" : "") : "active";
+	$scope.pageGames = $cookies.activePage_steam ? ($cookies.activePage_steam === "pageGames" ? "active" : "") : "active";
+	// $scope.pageGames = $cookies.activePage_steam === "pageGames" ? "active" : "";
 	$scope.pageUsers = $cookies.activePage_steam === "pageUsers" ? "active" : "";
+	$scope.pageConnect_steam = $cookies.activePage_steam === "pageConnect_steam" ? "active" : "";
 
 	// Sections in the games page – Steam Explorer
 	$scope.sectionNews = $cookies.activeSection_steam ? ($cookies.activeSection_steam === "sectionNews" ? "active" : "") : "active";
