@@ -4,6 +4,8 @@
 
 Social Explorer is a light-weight tool to perform analysis of user interactions on Facebook and Twitter.
 
+[Live site](http://berlo.id.au/hosted/jkruger)
+
 It performs searches over Facebook and Twitter public posts, and provides tools for analysing the results retrieved. Search can be customized as needed. Results from Facebook and Twitter are filtered for interesting information and combined intelligently. The program then offers several tools for analysis, charting and search performance measurement. Multiple searches can be conducted in one session to perform comparisons.
 
 ![Social Explorer](http://i.minus.com/ibeZhhzDVh7kEA.png)
@@ -102,5 +104,5 @@ All charts are plotted using [Highcharts](http://www.highcharts.com/).
 Angular table generated using [ng-table](https://github.com/esvit/ng-table).
 
 ## License
-Copyright (c) 2012-2014 Pulkit Karwal
+Copyright (c) 2012-2014 [http://twitter.com/pulkitkarwal](Pulkit Karwal) and Jack Kruger
 Licensed under the MIT license
